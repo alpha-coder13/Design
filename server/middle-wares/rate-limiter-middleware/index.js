@@ -1,22 +1,18 @@
 const path = require("path");
-const { ClientObject } = require("./client-object")
+const { ClientObject } = require("./objects/client-object")
 const { readFile, writeFile } = require('fs/promises');
-const { fetchRule } = require("./rule-engine");
-const { TokenBucket } = require("./token-bucket-object");
-const { getSchema } = require("./storage-schema");
+const { fetchRule } = require("./rules/rule-engine");
+const { TokenBucket } = require("./objects/token-bucket-object");
+const { getSchema } = require("./schema/storage-schema");
 
-const rateLimiter = async (req, res, next) => {
+ rateLimiter = async function (req, res, next) {
     let incomingIP = req.socket.remoteAddress;
+    console.log(incomingIP);
     let incomingURL = req.url;
     let client = new ClientObject(incomingIP, incomingURL);
     let rules = fetchRule(client.rule);
 
-    let data = await readFile(path.join(__dirname, './clients.json'), 'utf-8')
-    // .then(data => {
-    //     console.log(JSON.parse(data));
-    // }).catch(err => {
-    //     console.log('Error in reading file');
-    // })
+    let data = await readFile(path.join(__dirname, './json-storage/clients.json'), 'utf-8')
 
     data = JSON.parse(data);
 
@@ -25,12 +21,14 @@ const rateLimiter = async (req, res, next) => {
             let index = data.map((value) => value.clientID == client.clientID).indexOf(true);
 
             if (index !== -1) {
-                let exsistingClient = data.splice(index, 1);
+                let exsistingClient = data.splice(index, 1)[0];
                 let bucket = exsistingClient.tokenBucket;
                 let Rules = fetchRule(client.rule);
-                let [isvalid, newbucket] = Rules.isValidRequest(client, exsistingClient.requestTimestamp,exsistingClient );
+
+                let [isvalid, newbucket] = Rules.isValidRequest(client,exsistingClient );
+
                 exsistingClient = newbucket;
-                exsistingClient.timestamp = client.clientID;
+                exsistingClient.requestTimestamp = client.requestTimestamp;
                 data.push(exsistingClient);
                 data = JSON.stringify(data);
                 await writeFile(path.join(__dirname, './clients.json'),data,'utf-8')
@@ -41,8 +39,8 @@ const rateLimiter = async (req, res, next) => {
                 }
             }
             else{
-                let TokenBucket =  new TokenBucket();
-                data.push(getSchema(client,TokenBucket));
+                let tokenBucket =  new TokenBucket();
+                data.push(getSchema(client,tokenBucket));
                 data = JSON.stringify(data);
                 await writeFile(path.join(__dirname, './clients.json'),data,'utf-8')
                 next();
@@ -52,6 +50,6 @@ const rateLimiter = async (req, res, next) => {
             throw new TypeError('the database is not of type array')
         }
     }// for local testing
-    // console.log(JSON.parse(data));
 }
 
+module.exports = {rateLimiter}
