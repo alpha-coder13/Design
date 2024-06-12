@@ -7,7 +7,6 @@ const { getSchema } = require("./schema/storage-schema");
 
  rateLimiter = async function (req, res, next) {
     let incomingIP = req.socket.remoteAddress;
-    console.log(incomingIP);
     let incomingURL = req.url;
     let client = new ClientObject(incomingIP, incomingURL);
     let rules = fetchRule(client.rule);
@@ -28,10 +27,11 @@ const { getSchema } = require("./schema/storage-schema");
                 let [isvalid, newbucket] = Rules.isValidRequest(client,exsistingClient );
 
                 exsistingClient = newbucket;
+
                 exsistingClient.requestTimestamp = client.requestTimestamp;
                 data.push(exsistingClient);
                 data = JSON.stringify(data);
-                await writeFile(path.join(__dirname, './clients.json'),data,'utf-8')
+                await writeFile(path.join(__dirname, './json-storage/clients.json'),data,'utf-8')
                 if(isvalid){
                     next();
                 }else{

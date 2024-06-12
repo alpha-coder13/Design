@@ -1,1 +1,1 @@
-[{"clientID":"127.0.0.1","requestTimestamp":1718103452427,"tokenBucket":{"tokenCount":5,"bucketSize":10,"tokenBucketInterval":1}}]
+[{"clientID":"127.0.0.1","requestTimestamp":1718175345679,"tokenBucket":{"tokenCount":6,"bucketSize":10,"tokenBucketInterval":1}}]

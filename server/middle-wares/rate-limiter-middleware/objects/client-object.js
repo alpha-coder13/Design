@@ -1,4 +1,4 @@
-const { getWeight, getRule } = require("../request-weight-fetcher");
+const { getWeight, getRule } = require("../rules/request-weight-fetcher");
 
 const ClientObject = function (clientIP,incomingURL) {
     this.clientID = clientIP;

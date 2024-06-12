@@ -3,7 +3,6 @@ const { ClientObject } = require("../objects/client-object");
 const ruleBook = {
     '_tbk' : {
         isValidRequest(object,thisArg){
-
             if(object instanceof ClientObject){
                 thisArg.tokenBucket = this.generateToken(object.requestTimestamp,thisArg);
                 if(parseInt(thisArg.tokenBucket.tokenCount)!==NaN){
@@ -22,9 +21,9 @@ const ruleBook = {
             }
         },
         generateToken(timestampNew, thisArg){
-            console.log(thisArg);
+            // console.log(thisArg);
             thisArg.tokenBucket.tokenCount = parseInt(thisArg.tokenBucket.tokenCount)+ Math.floor((timestampNew - parseInt(thisArg.requestTimestamp))/((parseInt(thisArg.tokenBucket.tokenBucketInterval))*1000));
-            console.log(thisArg.tokenBucket.tokenCount);
+            // console.log(thisArg.tokenBucket.tokenCount);
             thisArg.tokenBucket.tokenCount = thisArg.tokenBucket.tokenCount > parseInt(thisArg.tokenBucket.bucketSize)? parseInt(thisArg.tokenBucket.bucketSize) :thisArg.tokenBucket.tokenCount;
             return thisArg.tokenBucket;
         },

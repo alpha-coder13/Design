@@ -1,5 +1,5 @@
 const requestWeight = new Map();
-requestWeight.set('/',{'weight':'1','rule':'_tbk'});
+requestWeight.set('/',{'weight':'4','rule':'_tbk'});
 
 const getWeight = function(url){
     return parseInt(requestWeight.get(url).weight);
