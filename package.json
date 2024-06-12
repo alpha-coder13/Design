@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/alpha-coder13/Design#readme",
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "redis": "^4.6.14"
   }
 }
