@@ -11,6 +11,6 @@ app.get('/',rateLimiter,(req,res)=>{
     res.send('hello')
 })
 
-app.listen(3000,'localhost',()=>{
+app.listen(process.env.SERVER-PORT,'localhost',()=>{
     console.log('serveron');
 })
