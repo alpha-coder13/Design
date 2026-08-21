@@ -11,9 +11,9 @@ type PostOrderResponse struct {
 	serviceResponse map[string]interface{}
 }
 
-type CourierSortStrategy func(csr []utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface
+type CourierSortStrategy func(csr map[string]utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface
 
-func pickCheapest(csr []utils.CourierServiceInterface, order utils.OrderInterface, comp func(csi utils.CourierServiceInterface, order utils.OrderInterface) int32) utils.CourierServiceInterface {
+func pickCheapest(csr map[string]utils.CourierServiceInterface, order utils.OrderInterface, comp func(csi utils.CourierServiceInterface, order utils.OrderInterface) int32) utils.CourierServiceInterface {
 	var res utils.CourierServiceInterface
 	for _, v := range csr {
 		if res == nil {
@@ -31,22 +31,21 @@ func pickCheapest(csr []utils.CourierServiceInterface, order utils.OrderInterfac
 
 var (
 	// always the lowest Price
-	SORT_BY_TOTAL_PRICE CourierSortStrategy = func(csr []utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
+	SORT_BY_TOTAL_PRICE CourierSortStrategy = func(csr map[string]utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
 		return pickCheapest(csr, order, utils.CourierServiceInterface.CalculatePriceTotal)
 	}
-	SORT_BY_DISTANCE_PRICE CourierSortStrategy = func(csr []utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
+	SORT_BY_DISTANCE_PRICE CourierSortStrategy = func(csr map[string]utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
 		return pickCheapest(csr, order, utils.CourierServiceInterface.CalculatePriceDistance)
 	}
-	SORT_BY_WEIGHT_PRICE CourierSortStrategy = func(csr []utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
+	SORT_BY_WEIGHT_PRICE CourierSortStrategy = func(csr map[string]utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
 		return pickCheapest(csr, order, utils.CourierServiceInterface.CalculatePriceWeight)
 	}
-	SORT_BY_VOLUME_PRICE CourierSortStrategy = func(csr []utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
+	SORT_BY_VOLUME_PRICE CourierSortStrategy = func(csr map[string]utils.CourierServiceInterface, order utils.OrderInterface) utils.CourierServiceInterface {
 		return pickCheapest(csr, order, utils.CourierServiceInterface.CalculatePriceVolume)
 	}
 )
 
 type CourierService struct {
-	utils.CourierServiceInterface
 	name          string
 	courierVendor utils.CourierServiceExternalVendorInterface
 	location      [2]float64
@@ -55,13 +54,13 @@ type CourierService struct {
 	weightRate    int32
 }
 
-func (csr *CourierService) calculatePriceTotal(order utils.OrderInterface) int32 {
-	distPrice := csr.calculatePriceDistance(order)
-	volPrice := csr.calculatePriceVolume(order)
-	wtPrice := csr.calculatePriceVolume(order)
+func (csr *CourierService) CalculatePriceTotal(order utils.OrderInterface) int32 {
+	distPrice := csr.CalculatePriceDistance(order)
+	volPrice := csr.CalculatePriceVolume(order)
+	wtPrice := csr.CalculatePriceWeight(order)
 	return distPrice + volPrice + wtPrice
 }
-func (csr *CourierService) calculatePriceDistance(order utils.OrderInterface) int32 {
+func (csr *CourierService) CalculatePriceDistance(order utils.OrderInterface) int32 {
 	var tdp int32
 	for _, val := range order.GetItems() {
 		location := val.GetLocation()
@@ -70,7 +69,7 @@ func (csr *CourierService) calculatePriceDistance(order utils.OrderInterface) in
 	}
 	return tdp
 }
-func (csr *CourierService) calculatePriceVolume(order utils.OrderInterface) int32 {
+func (csr *CourierService) CalculatePriceVolume(order utils.OrderInterface) int32 {
 	var tvp int32
 	for _, val := range order.GetItems() {
 		dimension := val.GetDimesions()
@@ -79,7 +78,7 @@ func (csr *CourierService) calculatePriceVolume(order utils.OrderInterface) int3
 	}
 	return tvp
 }
-func (csr *CourierService) calculatePriceWeight(order utils.OrderInterface) int32 {
+func (csr *CourierService) CalculatePriceWeight(order utils.OrderInterface) int32 {
 	var twp int32
 	for _, val := range order.GetItems() {
 		wt := val.GetWeight()
@@ -89,7 +88,7 @@ func (csr *CourierService) calculatePriceWeight(order utils.OrderInterface) int3
 }
 func (csr *CourierService) PostOrder(order utils.OrderInterface) (PostOrderResponse, error) {
 	var reponseStruct PostOrderResponse
-	var totalPrice = csr.calculatePriceTotal(order)
+	var totalPrice = csr.CalculatePriceTotal(order)
 	//
 	serviceResponse, err := csr.courierVendor.PostOrder(order)
 

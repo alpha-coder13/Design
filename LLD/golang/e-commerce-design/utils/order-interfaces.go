@@ -1,7 +1,7 @@
 package utils
 
 type OrderItemInterface interface {
-	setItemID() IID
+	SetItemID() IID
 	SetOrderID(OID)
 	GetOrderID() OID
 	GetLocation() [2]float64

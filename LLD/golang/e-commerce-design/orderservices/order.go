@@ -7,26 +7,21 @@ import (
 	"github.com/alpha-coder13/Design/LLD/golang/e-commerce-design/utils"
 )
 
-var ItemStoreRWMutex sync.RWMutex
-var ItemStore map[utils.IID]struct {
-	*OrderItem
-	bool
-}
-var OrderStoreRWMutex sync.RWMutex
-
-var OrderStore map[utils.OID]*Order
+var itemStoreRWMutex sync.RWMutex
+var itemStore = make(map[utils.IID]*OrderItem)
+var orderStoreRWMutex sync.RWMutex
+var orderStore = make(map[utils.OID]*Order)
 
 type OrderItem struct {
-	utils.OrderItemInterface
 	itemId       utils.IID
 	orderID      utils.OID
-	Dimension    utils.Dimension `json:"dimen"`
-	Weight       int32           `json:"wt"`
-	DropLocation [2]float64
+	dimension    utils.Dimension `json:"dimen"`
+	weight       int32           `json:"wt"`
+	dropLocation [2]float64
 	// few other parameters
 }
 
-func (oi *OrderItem) setItemID() utils.IID {
+func (oi *OrderItem) SetItemID() utils.IID {
 	currenItemValue := utils.ItemCounter.Load()
 	for {
 		if utils.ItemCounter.CompareAndSwap(currenItemValue, currenItemValue+1) {
@@ -44,6 +39,17 @@ func (oi *OrderItem) SetOrderID(orderID utils.OID) {
 
 func (oi *OrderItem) GetOrderID() utils.OID {
 	return oi.orderID
+}
+func (oi *OrderItem) GetLocation() [2]float64 {
+	return oi.dropLocation
+}
+
+func (oi *OrderItem) GetDimesions() utils.Dimension {
+	return oi.dimension
+}
+
+func (oi *OrderItem) GetWeight() int32 {
+	return oi.weight
 }
 
 type Order struct {

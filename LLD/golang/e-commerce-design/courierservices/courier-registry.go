@@ -6,18 +6,15 @@ import (
 	"github.com/alpha-coder13/Design/LLD/golang/e-commerce-design/utils"
 )
 
-var CourierRegistry = CourierServiceRegistry{}
+var courierRegistry = CourierServiceRegistry{}
 
-type CourierServiceRegistry struct {
-	utils.CourierServiceRegistryInterface
-	cs []utils.CourierServiceInterface
-}
+type CourierServiceRegistry map[string]utils.CourierServiceInterface
 
 func (csr *CourierServiceRegistry) AddCourierService(cs utils.CourierServiceInterface) {
-	if csr.cs == nil {
-		csr.cs = make([]utils.CourierServiceInterface, 0)
+	if (*csr) == nil {
+		*csr = make(map[string]utils.CourierServiceInterface, 0)
 	}
-	csr.cs = append(csr.cs, cs)
+	(*csr)[cs.GetName()] = cs
 }
 
 func (csr *CourierServiceRegistry) GetBestCourierService(order utils.OrderInterface) utils.CourierServiceInterface {
@@ -51,7 +48,11 @@ func (csr *CourierServiceRegistry) GetBestCourierService(order utils.OrderInterf
 			fmt.Println("Please Enter a valid input")
 			continue
 		}
-		courierService := sortStrategy(csr.cs, order)
+		courierService := sortStrategy(*csr, order)
 		return courierService
 	}
+}
+
+func (csr *CourierServiceRegistry) GetAllCourierServices() map[string]utils.CourierServiceInterface {
+	return *csr
 }

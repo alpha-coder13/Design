@@ -12,21 +12,16 @@ func CreateOrderService(itemArray []utils.IID) utils.OID {
 	order := new(Order)
 	order.SetOrderStatus(utils.ORDER_WAITING)
 	orderID := order.GetOrderID()
-	OrderStoreRWMutex.Lock()
-	OrderStore[orderID] = order
-	OrderStoreRWMutex.Unlock()
+	orderStore[orderID] = order
 
 	for _, val := range itemArray {
-		ItemStoreRWMutex.RLock()
-		value, ok := ItemStore[val]
-		ItemStoreRWMutex.RUnlock()
+		itemStoreRWMutex.RLock()
+		value, ok := itemStore[val]
+		itemStoreRWMutex.RUnlock()
 		if ok {
-			if !value.bool {
-				order.AddItem(value.OrderItemInterface)
-				value.bool = true
-				ItemStoreRWMutex.Lock()
-				ItemStore[val] = value
-				ItemStoreRWMutex.Unlock()
+			orderID := value.GetOrderID()
+			if orderID == 0 {
+				order.AddItem(value)
 			}
 		}
 	}
@@ -34,12 +29,14 @@ func CreateOrderService(itemArray []utils.IID) utils.OID {
 }
 
 func CreateItemService(data string) (utils.IID, error) {
-	var newItem OrderItem
+	newItem := new(OrderItem)
 	err := json.Unmarshal([]byte(data), &newItem)
 	if err != nil {
 		return 0, errors.New("Unable to unmarshal the json data")
 	}
-	return newItem.setItemID(), nil
+	itemID := newItem.SetItemID()
+	itemStore[itemID] = newItem
+	return itemID, nil
 }
 
 func AddOrderItemService(orderID utils.OID) {
@@ -49,16 +46,16 @@ func AddOrderItemService(orderID utils.OID) {
 func PostOrderService(orderID utils.OID) utils.OrderStatus {
 	// create new orderItem
 	var postStatus utils.OrderStatus
-	OrderStoreRWMutex.RLock()
-	postStatus = OrderStore[orderID].GetOrderStatus()
-	OrderStoreRWMutex.Unlock()
+	orderStoreRWMutex.RLock()
+	postStatus = orderStore[orderID].GetOrderStatus()
+	orderStoreRWMutex.Unlock()
 
 	if postStatus == utils.ORDER_WAITING {
-		OrderStoreRWMutex.Lock()
-		cs := courierservices.CourierRegistry.GetBestCourierService(OrderStore[orderID])
-		OrderStore[orderID].PostOrder(cs)
-		postStatus = OrderStore[orderID].GetOrderStatus()
-		OrderStoreRWMutex.Unlock()
+		orderStoreRWMutex.Lock()
+		cs := courierservices.GetAllCourierServices().GetBestCourierService(orderStore[orderID])
+		orderStore[orderID].PostOrder(cs)
+		postStatus = orderStore[orderID].GetOrderStatus()
+		orderStoreRWMutex.Unlock()
 
 	}
 	return postStatus
