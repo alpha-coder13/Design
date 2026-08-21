@@ -3,6 +3,8 @@ package orderservices
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"sync"
 
 	"github.com/alpha-coder13/Design/LLD/golang/e-commerce-design/courierservices"
 	"github.com/alpha-coder13/Design/LLD/golang/e-commerce-design/utils"
@@ -10,6 +12,7 @@ import (
 
 func CreateOrderService(itemArray []utils.IID) utils.OID {
 	order := new(Order)
+	order.orderMtx = new(sync.RWMutex)
 	order.SetOrderStatus(utils.ORDER_WAITING)
 	orderID := order.GetOrderID()
 	orderStore[orderID] = order
@@ -39,24 +42,54 @@ func CreateItemService(data string) (utils.IID, error) {
 	return itemID, nil
 }
 
-func AddOrderItemService(orderID utils.OID) {
+func AddOrderItemService(orderID utils.OID, itemId utils.IID) {
 	// create new orderItem
+	order, orderOk := orderStore[orderID]
+	itemStoreRWMutex.RLock()
+	value, itemOk := itemStore[itemId]
+	itemStoreRWMutex.RUnlock()
+	if itemOk && orderOk {
+		success := order.AddItem(value)
+		if success {
+			fmt.Println("Item Added succesfully to orderID")
+		} else {
+			fmt.Println("Item is Already Added To different OrderID")
+		}
+	} else {
+		if orderOk == false {
+			fmt.Print("Not a valid orderID, Pass a valid Order Id")
+		}
+		if itemOk == false {
+			fmt.Print("Not a valid ItemID, Pass a valid Item Id")
+		}
+
+	}
 }
 
 func PostOrderService(orderID utils.OID) utils.OrderStatus {
 	// create new orderItem
 	var postStatus utils.OrderStatus
-	orderStoreRWMutex.RLock()
 	postStatus = orderStore[orderID].GetOrderStatus()
-	orderStoreRWMutex.Unlock()
 
 	if postStatus == utils.ORDER_WAITING {
-		orderStoreRWMutex.Lock()
 		cs := courierservices.GetAllCourierServices().GetBestCourierService(orderStore[orderID])
 		orderStore[orderID].PostOrder(cs)
 		postStatus = orderStore[orderID].GetOrderStatus()
-		orderStoreRWMutex.Unlock()
-
 	}
 	return postStatus
+}
+
+func UpdateOrderStatus(orderID utils.OID, status utils.OrderStatus) {
+	err := orderStore[orderID].SetOrderStatus(status)
+
+	if err == nil {
+		// the order status os updated successfully
+		return
+	}
+
+	// the orderstatus is being updated to the same value
+}
+
+func GetOrderStatus(orderID utils.OID) {
+	fmt.Println(orderStore[orderID].GetOrderStatus())
 }

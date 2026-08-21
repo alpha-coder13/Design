@@ -14,6 +14,6 @@ type OrderInterface interface {
 	GetOrderID() OID
 	GetItems() []OrderItemInterface
 	GetOrderStatus() OrderStatus
-	SetOrderStatus(OrderStatus)
+	SetOrderStatus(OrderStatus) error
 	PostOrder(CourierServiceInterface)
 }
