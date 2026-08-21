@@ -1,4 +1,4 @@
-package ecommercedesign
+package utils
 
 type IID uint64
 type OID uint64
@@ -8,10 +8,10 @@ type Dimension struct {
 	Width   int32 `json:"w"`
 }
 
-type orderStatus int
+type OrderStatus int
 
 const (
-	ORDER_WAITING orderStatus = iota
+	ORDER_WAITING OrderStatus = iota
 	ORDER_TRANSIT
 	ORDER_SHIPPED
 	ORDER_FAILED
